@@ -1,26 +1,45 @@
-import React from 'react';
-import { View, TextInput, StyleSheet } from 'react-native';
+// components/InputField.tsx
+import React, { useState } from 'react';
+import { View, TextInput, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+type IoniconsName = keyof typeof Ionicons.glyphMap;
 
 interface InputFieldProps {
   placeholder: string;
-  iconName: keyof typeof Ionicons.glyphMap;
+  iconName: IoniconsName;
   secureTextEntry?: boolean;
-  onFocus?: () => void;
-  onBlur?: () => void;
+  value: string;
+  onChangeText: (text: string) => void;
 }
 
-export default function InputField({ placeholder, iconName, secureTextEntry, onFocus, onBlur }: InputFieldProps) {
+export default function InputField({
+  placeholder,
+  iconName,
+  secureTextEntry,
+  value,
+  onChangeText,
+}: InputFieldProps) {
+  const [isFocused, setIsFocused] = useState(false);
+
   return (
-    <View style={styles.container}>
-      <Ionicons name={iconName} size={20} color="#808080" style={styles.icon} />
+    <View
+      style={[
+        styles.container,
+        { borderBottomColor: isFocused ? '#E5B968' : '#D3D3D3' }, // Muda a cor da linha inferior dependendo do foco
+      ]}
+    >
+      <Ionicons name={iconName} size={20} color="#2F3739" style={styles.icon} />
       <TextInput
-        style={styles.input}
+        style={[styles.input]}
         placeholder={placeholder}
         placeholderTextColor="#808080"
         secureTextEntry={secureTextEntry}
-        onFocus={onFocus}
-        onBlur={onBlur}
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => setIsFocused(true)} // Define o estado de foco como true ao focar
+        onBlur={() => setIsFocused(false)} // Define o estado de foco como false ao desfocar
+        underlineColorAndroid="transparent" // Remove underline do Android
       />
     </View>
   );
@@ -30,10 +49,9 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5B968',
-    borderRadius: 10,
-    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D3D3D3', // Cor inicial da linha inferior
+    paddingVertical: 10,
     marginBottom: 20,
   },
   icon: {
@@ -41,7 +59,16 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 50,
     fontFamily: 'Poppins-Regular',
+    paddingVertical: 5,
+    borderWidth: 0, // Remove qualquer borda ao redor do TextInput
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none', // Remove contorno no Web
+      },
+      default: {
+        outlineWidth: 0, // Remove qualquer contorno ao focar em outras plataformas
+      },
+    }),
   },
 });
