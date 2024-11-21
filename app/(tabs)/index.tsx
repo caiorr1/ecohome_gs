@@ -21,7 +21,7 @@ export default function IndexScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.navigate('signup'); // Navegando para a tela de cadastro, com nome atualizado
+      navigation.navigate('signup');
     }, 3000);
 
     return () => clearTimeout(timer);

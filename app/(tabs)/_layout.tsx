@@ -13,7 +13,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarStyle: {
-          display: 'none', // Esconde a barra de navegação de tabs completamente
+          display: 'none',
         },
       }}
     >
@@ -28,7 +28,16 @@ export default function TabLayout() {
         options={{
           title: 'Cadastro',
           tabBarStyle: {
-            display: 'none', // Esconde a barra de navegação de tabs apenas nesta tela
+            display: 'none',
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="login"
+        options={{
+          title: 'Login',
+          tabBarStyle: {
+            display: 'none',
           },
         }}
       />

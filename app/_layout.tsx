@@ -14,6 +14,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     'Poppins-SemiBold': require('../assets/fonts/Poppins-SemiBold.ttf'),
+    'Poppins-Regular': require('../assets/fonts/Poppins-Regular.ttf'),
   });
 
   useEffect(() => {
@@ -30,11 +31,9 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
-
         <Stack.Screen name="signup" options={{ headerShown: false }} />
-
+        <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

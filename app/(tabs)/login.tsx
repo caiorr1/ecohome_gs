@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { useFonts } from 'expo-font';
 import InputField from '../../components/InputField';
-import { signup } from '../../api/AuthService';
-import { SignupData } from '../../api/types/AuthTypes';
+import { login } from '../../api/AuthService';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
@@ -12,44 +11,35 @@ type RootStackParamList = {
   login: undefined;
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'signup'>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'login'>;
 
-export default function SignupScreen() {
+export default function LoginScreen() {
   const [fontsLoaded] = useFonts({
     'Poppins-SemiBold': require('../../assets/fonts/Poppins-SemiBold.ttf'),
     'Poppins-Regular': require('../../assets/fonts/Poppins-Regular.ttf'),
   });
 
-  // Use NativeStackNavigationProp for better type inference
   const navigation = useNavigation<NavigationProp>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   if (!fontsLoaded) {
     return null;
   }
 
-  const handleSignup = async () => {
-    if (password !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem.');
-      return;
-    }
-
-    const signupData: SignupData = {
+  const handleLogin = async () => {
+    const loginData = {
       email,
       password,
     };
 
     try {
-      const response = await signup(signupData);
-      Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-      // Navigate to the login screen
-      navigation.navigate('login');
+      const response = await login(loginData);
+      Alert.alert('Sucesso', 'Login realizado com sucesso!');
     } catch (error) {
-      Alert.alert('Erro', 'Erro ao realizar cadastro. Tente novamente.');
-      console.error('Erro ao fazer signup:', error);
+      Alert.alert('Erro', 'Erro ao realizar login. Tente novamente.');
+      console.error('Erro ao fazer login:', error);
     }
   };
 
@@ -58,7 +48,7 @@ export default function SignupScreen() {
       <View style={styles.imageContainer}>
         <Image source={require('../../assets/images/group_things.png')} style={styles.image} />
       </View>
-
+      
       <Text style={styles.title}>Preencha com seus dados :)</Text>
 
       <InputField
@@ -74,22 +64,15 @@ export default function SignupScreen() {
         value={password}
         onChangeText={setPassword}
       />
-      <InputField
-        placeholder="Confirme sua senha"
-        iconName="lock-closed-outline"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
 
-      <TouchableOpacity style={styles.button} onPress={handleSignup}>
-        <Text style={styles.buttonText}>Cadastrar-se</Text>
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>Fazer login</Text>
       </TouchableOpacity>
 
       <Text style={styles.signupText}>
-        Já tem uma conta?{' '}
-        <Text style={styles.signupLink} onPress={() => navigation.navigate('login')}>
-          Faça login :)
+        Novo por aqui?{' '}
+        <Text style={styles.signupLink} onPress={() => navigation.navigate('signup')}>
+          Cadastre-se :)
         </Text>
       </Text>
     </View>
