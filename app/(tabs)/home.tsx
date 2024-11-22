@@ -22,9 +22,10 @@ export default function HomeScreen() {
 
   const [comodos, setComodos] = useState<ComodoData[]>([]);
   const [selectedComodoId, setSelectedComodoId] = useState<string | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false); // Gerencia abertura da lista
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [eletroModalVisible, setEletroModalVisible] = useState(false);
+  const [editingEletroId, setEditingEletroId] = useState<string | null>(null);
   const [newComodo, setNewComodo] = useState<string>("");
   const [newEletro, setNewEletro] = useState<EletrodomesticoData>({
     nome: "",
@@ -33,6 +34,7 @@ export default function HomeScreen() {
     horarioFinal: "",
     diasUso: [],
     comodoId: "",
+    id: "",
   });
 
   useEffect(() => {
@@ -51,10 +53,10 @@ export default function HomeScreen() {
     }
   };
 
-  const saveComodos = async (newComodos: ComodoData[]) => {
+  const saveComodos = async (updatedComodos: ComodoData[]) => {
     try {
-      await AsyncStorage.setItem("@comodos", JSON.stringify(newComodos));
-      setComodos(newComodos);
+      await AsyncStorage.setItem("@comodos", JSON.stringify(updatedComodos));
+      setComodos(updatedComodos);
     } catch (error) {
       console.error("Erro ao salvar cômodos:", error);
     }
@@ -75,7 +77,7 @@ export default function HomeScreen() {
     setModalVisible(false);
   };
 
-  const handleAddEletrodomestico = () => {
+  const handleAddOrEditEletrodomestico = () => {
     if (!selectedComodoId) return;
     if (
       newEletro.nome.trim() === "" ||
@@ -88,13 +90,16 @@ export default function HomeScreen() {
 
     const updatedComodos = comodos.map((comodo) => {
       if (comodo.id === selectedComodoId) {
-        return {
-          ...comodo,
-          eletrodomesticos: [
-            ...(comodo.eletrodomesticos || []),
-            { ...newEletro, id: Date.now().toString() },
-          ],
-        };
+        const updatedEletrodomesticos = editingEletroId
+          ? (comodo.eletrodomesticos || []).map((eletro) =>
+              eletro.id === editingEletroId ? { ...newEletro } : eletro
+            )
+          : [
+              ...(comodo.eletrodomesticos || []),
+              { ...newEletro, id: Date.now().toString() },
+            ];
+
+        return { ...comodo, eletrodomesticos: updatedEletrodomesticos };
       }
       return comodo;
     });
@@ -107,13 +112,45 @@ export default function HomeScreen() {
       horarioFinal: "",
       diasUso: [],
       comodoId: "",
+      id: "",
     });
+    setEditingEletroId(null);
     setEletroModalVisible(false);
+  };
+
+  const handleRemoveEletrodomestico = (eletroId: string) => {
+    if (!selectedComodoId) return;
+
+    const updatedComodos = comodos.map((comodo) => {
+      if (comodo.id === selectedComodoId) {
+        return {
+          ...comodo,
+          eletrodomesticos: (comodo.eletrodomesticos || []).filter(
+            (eletro) => eletro.id !== eletroId
+          ),
+        };
+      }
+      return comodo;
+    });
+
+    saveComodos(updatedComodos);
+  };
+
+  const handleEditEletrodomestico = (eletroId: string) => {
+    const comodo = comodos.find((c) => c.id === selectedComodoId);
+    if (!comodo || !comodo.eletrodomesticos) return;
+
+    const eletro = comodo.eletrodomesticos.find((e) => e.id === eletroId);
+    if (!eletro) return;
+
+    setNewEletro(eletro);
+    setEditingEletroId(eletroId);
+    setEletroModalVisible(true);
   };
 
   const handleSelectComodo = (id: string) => {
     setSelectedComodoId(id);
-    setDropdownOpen(false); // Fecha a lista ao selecionar
+    setDropdownOpen(false);
   };
 
   return (
@@ -123,12 +160,12 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={styles.dropdownButton}
-        onPress={() => setDropdownOpen(!dropdownOpen)} // Abre/fecha a lista
+        onPress={() => setDropdownOpen(!dropdownOpen)}
       >
         <Text style={styles.dropdownButtonText}>
           {selectedComodoId
             ? comodos.find((comodo) => comodo.id === selectedComodoId)?.nome
-            : "Selecione o Cômodo"}
+            : "Selecione um cômodo"}
         </Text>
         <Ionicons
           name={dropdownOpen ? "chevron-up-outline" : "chevron-down-outline"}
@@ -180,11 +217,24 @@ export default function HomeScreen() {
                 <Text style={styles.eletroInfo}>
                   De: {eletro.horarioInicial} Até: {eletro.horarioFinal}
                 </Text>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    onPress={() => handleEditEletrodomestico(eletro.id || "")}
+                  >
+                    <Ionicons name="create-outline" size={20} color="blue" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveEletrodomestico(eletro.id || "")}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="red" />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
         </View>
       )}
 
+      {/* Modal for Adding Room */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -200,13 +250,17 @@ export default function HomeScreen() {
               value={newComodo}
               onChangeText={setNewComodo}
             />
-            <TouchableOpacity style={styles.addButton} onPress={handleAddComodo}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddComodo}
+            >
               <Text style={styles.buttonText}>Adicionar</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
+      {/* Modal for Adding/Editing Appliance */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -215,12 +269,16 @@ export default function HomeScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Adicionar Eletrodoméstico</Text>
+            <Text style={styles.modalTitle}>
+              {editingEletroId ? "Editar" : "Adicionar"} Eletrodoméstico
+            </Text>
             <TextInput
               style={styles.modalInput}
               placeholder="Nome do eletrodoméstico"
               value={newEletro.nome}
-              onChangeText={(text) => setNewEletro({ ...newEletro, nome: text })}
+              onChangeText={(text) =>
+                setNewEletro({ ...newEletro, nome: text })
+              }
             />
             <TextInput
               style={styles.modalInput}
@@ -240,9 +298,11 @@ export default function HomeScreen() {
             />
             <TouchableOpacity
               style={styles.addButton}
-              onPress={handleAddEletrodomestico}
+              onPress={handleAddOrEditEletrodomestico}
             >
-              <Text style={styles.buttonText}>Adicionar</Text>
+              <Text style={styles.buttonText}>
+                {editingEletroId ? "Salvar" : "Adicionar"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -354,6 +414,11 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
     fontSize: 14,
     color: "#2F3739",
+  },
+  actionButtons: {
+    flexDirection: "row",
+    marginTop: 10,
+    justifyContent: "space-between",
   },
   modalOverlay: {
     flex: 1,
