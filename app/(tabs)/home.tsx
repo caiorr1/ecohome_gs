@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  Alert,
 } from "react-native";
 import { useFonts } from "expo-font";
+import { EletrodomesticoData } from "../../api/types/EletrodomesticoTypes";
+import { ComodoData } from "../../api/types/ComodoTypes";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import { ComodoData } from "../../api/types/ComodoTypes";
-import { EletrodomesticoData } from "../../api/types/EletrodomesticoTypes";
 
 export default function HomeScreen() {
   const [fontsLoaded] = useFonts({
@@ -21,9 +22,18 @@ export default function HomeScreen() {
 
   const [comodos, setComodos] = useState<ComodoData[]>([]);
   const [selectedComodoId, setSelectedComodoId] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false); // Gerencia abertura da lista
   const [modalVisible, setModalVisible] = useState(false);
-  const [inputValue, setInputValue] = useState<string>("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [eletroModalVisible, setEletroModalVisible] = useState(false);
+  const [newComodo, setNewComodo] = useState<string>("");
+  const [newEletro, setNewEletro] = useState<EletrodomesticoData>({
+    nome: "",
+    potencia: 0,
+    horarioInicial: "",
+    horarioFinal: "",
+    diasUso: [],
+    comodoId: "",
+  });
 
   useEffect(() => {
     loadComodos();
@@ -33,7 +43,8 @@ export default function HomeScreen() {
     try {
       const storedComodos = await AsyncStorage.getItem("@comodos");
       if (storedComodos) {
-        setComodos(JSON.parse(storedComodos));
+        const parsedComodos = JSON.parse(storedComodos);
+        setComodos(parsedComodos);
       }
     } catch (error) {
       console.error("Erro ao carregar cômodos:", error);
@@ -49,29 +60,61 @@ export default function HomeScreen() {
     }
   };
 
-  const handleAddEletrodomestico = (comodoId: string) => {
-    const newEletro: EletrodomesticoData = {
+  const handleAddComodo = () => {
+    if (newComodo.trim() === "") {
+      Alert.alert("Erro", "O nome do cômodo não pode estar vazio!");
+      return;
+    }
+    const newComodoData: ComodoData = {
       id: Date.now().toString(),
-      nome: "Novo Eletrodoméstico",
-      potencia: 0,
-      horarioInicial: "08:00",
-      horarioFinal: "20:00",
-      comodoId,
-      diasUso: ["Segunda-feira"],
+      nome: newComodo.trim(),
+      eletrodomesticos: [],
     };
-
-    const updatedComodos = comodos.map((comodo) =>
-      comodo.id === comodoId
-        ? { ...comodo, eletrodomesticos: [...(comodo.eletrodomesticos || []), newEletro] }
-        : comodo
-    );
-
-    saveComodos(updatedComodos);
+    saveComodos([...comodos, newComodoData]);
+    setNewComodo("");
+    setModalVisible(false);
   };
 
-  if (!fontsLoaded) {
-    return null;
-  }
+  const handleAddEletrodomestico = () => {
+    if (!selectedComodoId) return;
+    if (
+      newEletro.nome.trim() === "" ||
+      newEletro.horarioInicial === "" ||
+      newEletro.horarioFinal === ""
+    ) {
+      Alert.alert("Erro", "Preencha todos os campos!");
+      return;
+    }
+
+    const updatedComodos = comodos.map((comodo) => {
+      if (comodo.id === selectedComodoId) {
+        return {
+          ...comodo,
+          eletrodomesticos: [
+            ...(comodo.eletrodomesticos || []),
+            { ...newEletro, id: Date.now().toString() },
+          ],
+        };
+      }
+      return comodo;
+    });
+
+    saveComodos(updatedComodos);
+    setNewEletro({
+      nome: "",
+      potencia: 0,
+      horarioInicial: "",
+      horarioFinal: "",
+      diasUso: [],
+      comodoId: "",
+    });
+    setEletroModalVisible(false);
+  };
+
+  const handleSelectComodo = (id: string) => {
+    setSelectedComodoId(id);
+    setDropdownOpen(false); // Fecha a lista ao selecionar
+  };
 
   return (
     <View style={styles.container}>
@@ -80,7 +123,7 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={styles.dropdownButton}
-        onPress={() => setDropdownOpen((prev) => !prev)}
+        onPress={() => setDropdownOpen(!dropdownOpen)} // Abre/fecha a lista
       >
         <Text style={styles.dropdownButtonText}>
           {selectedComodoId
@@ -100,14 +143,22 @@ export default function HomeScreen() {
             <TouchableOpacity
               key={comodo.id}
               style={styles.dropdownItem}
-              onPress={() => {
-                setSelectedComodoId(comodo.id);
-                setDropdownOpen(false);
-              }}
+              onPress={() => handleSelectComodo(comodo.id)}
             >
               <Text style={styles.dropdownItemText}>{comodo.nome}</Text>
             </TouchableOpacity>
           ))}
+          <TouchableOpacity
+            style={styles.dropdownItem}
+            onPress={() => {
+              setModalVisible(true);
+              setDropdownOpen(false);
+            }}
+          >
+            <Text style={[styles.dropdownItemText, { color: "#007BFF" }]}>
+              + Adicionar Novo Cômodo
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -115,7 +166,7 @@ export default function HomeScreen() {
         <View style={styles.comodoDetails}>
           <TouchableOpacity
             style={styles.addComodoButton}
-            onPress={() => handleAddEletrodomestico(selectedComodoId)}
+            onPress={() => setEletroModalVisible(true)}
           >
             <Ionicons name="add-circle-outline" size={24} color="#AAAAAA" />
             <Text style={styles.addComodoText}>Adicionar eletrodoméstico</Text>
@@ -133,6 +184,69 @@ export default function HomeScreen() {
             ))}
         </View>
       )}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Adicionar Cômodo</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Nome do cômodo"
+              value={newComodo}
+              onChangeText={setNewComodo}
+            />
+            <TouchableOpacity style={styles.addButton} onPress={handleAddComodo}>
+              <Text style={styles.buttonText}>Adicionar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={eletroModalVisible}
+        onRequestClose={() => setEletroModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>Adicionar Eletrodoméstico</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Nome do eletrodoméstico"
+              value={newEletro.nome}
+              onChangeText={(text) => setNewEletro({ ...newEletro, nome: text })}
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Horário Inicial (Ex: 08:00)"
+              value={newEletro.horarioInicial}
+              onChangeText={(text) =>
+                setNewEletro({ ...newEletro, horarioInicial: text })
+              }
+            />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Horário Final (Ex: 20:00)"
+              value={newEletro.horarioFinal}
+              onChangeText={(text) =>
+                setNewEletro({ ...newEletro, horarioFinal: text })
+              }
+            />
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAddEletrodomestico}
+            >
+              <Text style={styles.buttonText}>Adicionar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -240,5 +354,56 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
     fontSize: 14,
     color: "#2F3739",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalView: {
+    width: "90%",
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 20,
+    marginBottom: 15,
+    color: "#333",
+    textAlign: "center",
+  },
+  modalInput: {
+    width: "100%",
+    padding: 10,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#DDD",
+    borderRadius: 10,
+    fontFamily: "Poppins-Regular",
+    fontSize: 16,
+    color: "#333",
+    backgroundColor: "#F9F9F9",
+  },
+  addButton: {
+    backgroundColor: "#28a745",
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  buttonText: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 16,
+    color: "#FFF",
   },
 });
