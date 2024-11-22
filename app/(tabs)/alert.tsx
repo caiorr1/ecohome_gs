@@ -31,7 +31,7 @@ export default function AlertsScreen() {
   const [status, setStatus] = useState("");
   const [cor, setCor] = useState("#4CAF50");
 
-  const mediaDiaria = 5.8;
+  const mediaDiaria = 6.15;
 
   const [fontsLoaded] = useFonts({
     "Poppins-Regular": require("../../assets/fonts/Poppins-Regular.ttf"),
@@ -56,26 +56,24 @@ export default function AlertsScreen() {
     }
   };
 
-  // Função para calcular o total de consumo e atualizar o status
   const filterAlertas = (comodos: ComodoData[]) => {
     const allEletros = comodos.flatMap(
       (comodo: ComodoData) => comodo.eletrodomesticos || []
     );
     setAlertas(allEletros);
-
+  
     const total = allEletros.reduce((acc, eletro) => acc + eletro.potencia, 0);
     setTotalConsumo(total);
-
+  
     if (total < mediaDiaria) {
       setStatus("Seu consumo está abaixo da média");
-      setCor("#4CAF50");
+      setCor("#4CAF50"); 
     } else {
       setStatus("Seu consumo está acima da média");
-      setCor("#FF5722");
+      setCor("#FF5722"); 
     }
   };
 
-  // Função para definir a cor do ícone com base na tela
   const getIconColor = (screen: string) => {
     return route.name === screen ? "#4CAF50" : "#808080"; 
   };
