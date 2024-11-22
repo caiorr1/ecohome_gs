@@ -42,6 +42,7 @@ export default function HomeScreen() {
   const [eletroModalVisible, setEletroModalVisible] = useState(false);
   const [editingEletroId, setEditingEletroId] = useState<string | null>(null);
   const [newComodo, setNewComodo] = useState<string>("");
+
   const [newEletro, setNewEletro] = useState<EletrodomesticoData>({
     nome: "",
     potencia: 0,
@@ -90,6 +91,29 @@ export default function HomeScreen() {
     saveComodos([...comodos, newComodoData]);
     setNewComodo("");
     setModalVisible(false);
+  };
+
+  const handleRemoveComodo = (comodoId: string) => {
+    Alert.alert(
+      "Confirmar exclusão",
+      "Você tem certeza que deseja excluir este cômodo?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel",
+        },
+        {
+          text: "Excluir",
+          onPress: () => {
+            const updatedComodos = comodos.filter(
+              (comodo) => comodo.id !== comodoId
+            );
+            saveComodos(updatedComodos);
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   const handleAddOrEditEletrodomestico = () => {
@@ -201,13 +225,21 @@ export default function HomeScreen() {
       {dropdownOpen && (
         <View style={styles.dropdownList}>
           {comodos.map((comodo) => (
-            <TouchableOpacity
-              key={comodo.id}
-              style={styles.dropdownItem}
-              onPress={() => handleSelectComodo(comodo.id)}
-            >
-              <Text style={styles.dropdownItemText}>{comodo.nome}</Text>
-            </TouchableOpacity>
+            <View key={comodo.id} style={styles.dropdownItem}>
+              <TouchableOpacity
+                style={styles.dropdownItemButton}
+                onPress={() => handleSelectComodo(comodo.id)}
+              >
+                <Text style={styles.dropdownItemText}>{comodo.nome}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleRemoveComodo(comodo.id)}
+              >
+                <Ionicons name="trash-outline" size={24} color="red" />
+              </TouchableOpacity>
+            </View>
           ))}
           <TouchableOpacity
             style={styles.dropdownItem}
@@ -393,6 +425,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: "#2F3739",
   },
+  dropdownItemButton: {
+    flex: 1, 
+    justifyContent: "flex-start",
+  },
+  deleteButton: {
+    padding: 5,
+    borderRadius: 50, 
+    backgroundColor: "#f8d7da", 
+  },
   dropdownButton: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -423,7 +464,18 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   dropdownItem: {
+    flexDirection: "row", // Alinha o nome do cômodo e o botão na mesma linha
+    justifyContent: "space-between", // Coloca o nome do cômodo à esquerda e o botão de lixeira à direita
+    alignItems: "center", // Garante que os itens estejam bem alinhados verticalmente
     padding: 15,
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    marginVertical: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   dropdownItemText: {
     fontFamily: "Poppins-Regular",
