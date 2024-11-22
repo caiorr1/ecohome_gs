@@ -50,6 +50,15 @@ export default function TabLayout() {
           },
         }}
       />
+      <Tabs.Screen
+        name="alert"
+        options={{
+          title: 'Alert',
+          tabBarStyle: {
+            display: 'none',
+          },
+        }}
+      />
     </Tabs>
   );
 }

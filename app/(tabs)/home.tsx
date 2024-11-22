@@ -13,12 +13,26 @@ import { EletrodomesticoData } from "../../api/types/EletrodomesticoTypes";
 import { ComodoData } from "../../api/types/ComodoTypes";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation, useRoute } from "@react-navigation/native";
+
+type RootStackParamList = {
+  signup: undefined;
+  login: undefined;
+  home: undefined;
+  alert: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "home">;
 
 export default function HomeScreen() {
   const [fontsLoaded] = useFonts({
     "Poppins-SemiBold": require("../../assets/fonts/Poppins-SemiBold.ttf"),
     "Poppins-Regular": require("../../assets/fonts/Poppins-Regular.ttf"),
   });
+
+  const navigation = useNavigation<NavigationProp>();
+  const route = useRoute();
 
   const [comodos, setComodos] = useState<ComodoData[]>([]);
   const [selectedComodoId, setSelectedComodoId] = useState<string | null>(null);
@@ -153,6 +167,14 @@ export default function HomeScreen() {
     setDropdownOpen(false);
   };
 
+  const handleNavigateToAlert = () => {
+    navigation.navigate("alert");
+  };
+
+  const getIconColor = (screen: string) => {
+    return route.name === screen ? "#4CAF50" : "#808080";
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Olá :)</Text>
@@ -234,7 +256,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Modal for Adding Room */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -260,7 +281,6 @@ export default function HomeScreen() {
         </View>
       </Modal>
 
-      {/* Modal for Adding/Editing Appliance */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -307,6 +327,36 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      <View style={styles.bottomNav}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate("home")}
+        >
+          <Ionicons
+            name="home"
+            size={24}
+            color={getIconColor("home")} // Aplica a cor da função para "Home"
+          />
+          <Text style={[styles.navText, { color: getIconColor("home") }]}>
+            Home
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={handleNavigateToAlert}
+        >
+          <Ionicons
+            name="notifications-outline"
+            size={24}
+            color={getIconColor("alert")} // Aplica a cor da função para "Alertas"
+          />
+          <Text style={[styles.navText, { color: getIconColor("alert") }]}>
+            Alertas
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -470,5 +520,28 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-SemiBold",
     fontSize: 16,
     color: "#FFF",
+  },
+  bottomNav: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#FFF",
+    paddingVertical: 10,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  navItem: {
+    alignItems: "center",
+  },
+  navText: {
+    fontSize: 12,
+    color: "#4CAF50",
   },
 });
