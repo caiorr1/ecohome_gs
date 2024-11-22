@@ -1,29 +1,36 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
-import { useFonts } from 'expo-font';
-import InputField from '../../components/InputField';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Image,
+} from "react-native";
+import { useFonts } from "expo-font";
+import InputField from "../../components/InputField";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
 
 type RootStackParamList = {
   signup: undefined;
   login: undefined;
-  home: undefined; 
+  home: undefined;
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'login'>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "login">;
 
 export default function LoginScreen() {
   const [fontsLoaded] = useFonts({
-    'Poppins-SemiBold': require('../../assets/fonts/Poppins-SemiBold.ttf'),
-    'Poppins-Regular': require('../../assets/fonts/Poppins-Regular.ttf'),
+    "Poppins-SemiBold": require("../../assets/fonts/Poppins-SemiBold.ttf"),
+    "Poppins-Regular": require("../../assets/fonts/Poppins-Regular.ttf"),
   });
 
   const navigation = useNavigation<NavigationProp>();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   if (!fontsLoaded) {
     return null;
@@ -34,29 +41,32 @@ export default function LoginScreen() {
       const storedUser = await AsyncStorage.getItem(`user_${email}`);
 
       if (!storedUser) {
-        Alert.alert('Erro', 'Usuário não encontrado.');
+        Alert.alert("Erro", "Usuário não encontrado.");
         return;
       }
 
       const userData = JSON.parse(storedUser);
 
       if (userData.password !== password) {
-        Alert.alert('Erro', 'Senha incorreta.');
+        Alert.alert("Erro", "Senha incorreta.");
         return;
       }
 
-      Alert.alert('Sucesso', 'Login realizado com sucesso!');
-      navigation.navigate('home');
+      Alert.alert("Sucesso", "Login realizado com sucesso!");
+      navigation.navigate("home");
     } catch (error) {
-      Alert.alert('Erro', 'Erro ao realizar login. Tente novamente.');
-      console.error('Erro ao fazer login:', error);
+      Alert.alert("Erro", "Erro ao realizar login. Tente novamente.");
+      console.error("Erro ao fazer login:", error);
     }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.imageContainer}>
-        <Image source={require('../../assets/images/group_things.png')} style={styles.image} />
+        <Image
+          source={require("../../assets/images/group_things.png")}
+          style={styles.image}
+        />
       </View>
 
       <Text style={styles.title}>Preencha com seus dados :)</Text>
@@ -80,8 +90,11 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <Text style={styles.signupText}>
-        Novo por aqui?{' '}
-        <Text style={styles.signupLink} onPress={() => navigation.navigate('signup')}>
+        Novo por aqui?{" "}
+        <Text
+          style={styles.signupLink}
+          onPress={() => navigation.navigate("signup")}
+        >
           Cadastre-se :)
         </Text>
       </Text>
@@ -93,46 +106,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: "#F7F7F7",
   },
   imageContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 30,
   },
   image: {
     width: 400,
     height: 300,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   title: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: "Poppins-SemiBold",
     fontSize: 24,
     marginBottom: 20,
-    color: '#2F3739',
+    color: "#2F3739",
   },
   button: {
-    backgroundColor: '#E5B968',
+    backgroundColor: "#E5B968",
     borderRadius: 20,
     paddingVertical: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 20,
-    width: '70%',
-    alignSelf: 'center',
+    width: "70%",
+    alignSelf: "center",
   },
   buttonText: {
-    fontFamily: 'Poppins-SemiBold',
+    fontFamily: "Poppins-SemiBold",
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
   },
   signupText: {
-    fontFamily: 'Poppins-Regular',
+    fontFamily: "Poppins-Regular",
     fontSize: 14,
-    color: '#2F3739',
-    textAlign: 'center',
+    color: "#2F3739",
+    textAlign: "center",
     marginTop: 20,
   },
   signupLink: {
-    fontFamily: 'Poppins-SemiBold',
-    color: '#000',
+    fontFamily: "Poppins-SemiBold",
+    color: "#000",
   },
 });

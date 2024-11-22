@@ -34,14 +34,15 @@ export default function SignupScreen() {
       Alert.alert('Erro', 'As senhas não coincidem.');
       return;
     }
-
+  
     const signupData = {
       email,
       password,
     };
-
+  
     try {
-      // Salva os dados do usuário no AsyncStorage
+      await AsyncStorage.clear();
+  
       await AsyncStorage.setItem(`user_${signupData.email}`, JSON.stringify(signupData));
       Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
       navigation.navigate('login');
