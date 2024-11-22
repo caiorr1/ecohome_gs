@@ -7,86 +7,133 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { EletrodomesticoData } from "../../api/types/EletrodomesticoTypes";
 import { ComodoData } from "../../api/types/ComodoTypes";
+import * as Progress from 'react-native-progress'; // Importação do Progress
+import { useFonts } from "expo-font"; // Importação do hook de fontes
 
 type RootStackParamList = {
   home: undefined;
   alert: undefined;
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'alert'>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "alert">;
 
 export default function AlertsScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
 
-  const [comodos, setComodos] = useState<ComodoData[]>([]);
+  const [comodos, setComodos] = useState<ComodoData[]>([]); 
   const [alertas, setAlertas] = useState<EletrodomesticoData[]>([]);
+  const [totalConsumo, setTotalConsumo] = useState(0);
+  const [status, setStatus] = useState("");
+  const [cor, setCor] = useState("#4CAF50");
+
+  const mediaDiaria = 5.8;
+
+  const [fontsLoaded] = useFonts({
+    "Poppins-Regular": require("../../assets/fonts/Poppins-Regular.ttf"),
+    "Poppins-Bold": require("../../assets/fonts/Poppins-SemiBold.ttf"),
+  });
 
   useEffect(() => {
-    loadComodos();
-  }, []);
+    loadComodos(); // Certifique-se de que o hook seja chamado da mesma forma todas as vezes
+  }, []); // A dependência está vazia, assim o efeito só será executado na montagem
 
+  // Função para carregar cômodos do AsyncStorage
   const loadComodos = async () => {
     try {
       const storedComodos = await AsyncStorage.getItem("@comodos");
       if (storedComodos) {
         const parsedComodos = JSON.parse(storedComodos);
-        setComodos(parsedComodos);
-        const allEletros = parsedComodos.flatMap((comodo: ComodoData) => comodo.eletrodomesticos || []);
-        setAlertas(allEletros);
+        setComodos(parsedComodos); // Atualiza o estado com os cômodos
+        filterAlertas(parsedComodos); // Filtra os alertas depois de carregar os dados
       }
     } catch (error) {
       console.error("Erro ao carregar cômodos:", error);
     }
   };
 
+  // Função para calcular o total de consumo e atualizar o status
+  const filterAlertas = (comodos: ComodoData[]) => {
+    const allEletros = comodos.flatMap(
+      (comodo: ComodoData) => comodo.eletrodomesticos || []
+    );
+    setAlertas(allEletros);
+
+    const total = allEletros.reduce((acc, eletro) => acc + eletro.potencia, 0);
+    setTotalConsumo(total);
+
+    if (total < mediaDiaria) {
+      setStatus("Seu consumo está abaixo da média");
+      setCor("#4CAF50");
+    } else {
+      setStatus("Seu consumo está acima da média");
+      setCor("#FF5722");
+    }
+  };
+
+  // Função para definir a cor do ícone com base na tela
   const getIconColor = (screen: string) => {
-    return route.name === screen ? "#4CAF50" : "#808080";
+    return route.name === screen ? "#4CAF50" : "#808080"; 
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Relatório semanal</Text>
-      <Text style={styles.subtitle}>
-        {alertas.length > 0
-          ? "Seu consumo está acima da média"
-          : "Seu consumo está abaixo da média"}
-      </Text>
+      <Text style={[styles.title, { fontFamily: "Poppins-Bold" }]}>Relatório semanal</Text>
 
-      {alertas.length > 0 ? (
-        alertas.map((eletro) => (
-          <View key={eletro.id} style={styles.alertItem}>
-            <Text style={styles.eletroName}>{eletro.nome}</Text>
-            <Text style={styles.eletroInfo}>
-              Potência: {eletro.potencia}Kw/h
-            </Text>
-            <Text style={styles.eletroInfo}>
-              Horário: {eletro.horarioInicial} - {eletro.horarioFinal}
-            </Text>
-          </View>
-        ))
-      ) : (
-        <Text style={styles.noAlert}>Nenhuma medida necessária!</Text>
-      )}
+      <View style={styles.consumoBox}>
+        <Ionicons name="flash" size={40} color={getIconColor("alert")} />
+        <Text style={[styles.consumoText, { fontFamily: "Poppins-Regular" }]}>
+          {totalConsumo.toFixed(2)} kWh
+        </Text>
+        
+        <Progress.Bar
+          progress={totalConsumo / 100}
+          width={200}
+          height={10}
+          color={getIconColor("alert")}
+          unfilledColor="#e0e0e0"
+        />
+
+        <Text style={[styles.consumoStatus, { fontFamily: "Poppins-Regular" }]}>
+          {status}
+        </Text>
+      </View>
+
+      <View style={styles.eletroList}>
+        {alertas.length > 0 ? (
+          alertas.map((eletro, index) => (
+            <View key={index} style={styles.eletroItem}>
+              <Text style={[styles.eletroName, { fontFamily: "Poppins-Bold" }]}>
+                {eletro.nome}
+              </Text>
+              <Text style={[styles.eletroInfo, { fontFamily: "Poppins-Regular" }]}>
+                Potência: {eletro.potencia} kWh
+              </Text>
+              <Text style={[styles.eletroInfo, { fontFamily: "Poppins-Regular" }]}>
+                Horário: {eletro.horarioInicial} - {eletro.horarioFinal}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <Text style={[styles.noAlert, { fontFamily: "Poppins-Regular" }]}>
+            Nenhum eletrodoméstico registrado!
+          </Text>
+        )}
+      </View>
 
       <View style={styles.bottomNav}>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigation.navigate("home")}
         >
-          <Ionicons
-            name="home"
-            size={24}
-            color={getIconColor("home")}
-          />
-          <Text style={[styles.navText, { color: getIconColor("home") }]}>
-            Home
-          </Text>
+          <Ionicons name="home" size={24} color={getIconColor("home")} />
+          <Text style={[styles.navText, { color: getIconColor("home") }]}>Home</Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => navigation.navigate("alert")}
@@ -96,7 +143,7 @@ export default function AlertsScreen() {
             size={24}
             color={getIconColor("alert")}
           />
-          <Text style={[styles.navText, { color: getIconColor("alert") }]}>
+          <Text style={[styles.navText, { color: getIconColor("alert") }]} >
             Alertas
           </Text>
         </TouchableOpacity>
@@ -117,12 +164,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: "#2F3739",
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#2F3739",
-    marginBottom: 20,
+  consumoBox: {
+    backgroundColor: "#FFF",
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+    alignItems: "center",
   },
-  alertItem: {
+  consumoText: {
+    fontWeight: "bold",
+    fontSize: 18,
+    marginTop: 10,
+  },
+  consumoStatus: {
+    fontSize: 16,
+    color: "#777",
+    marginTop: 10, 
+  },
+  eletroList: {
+    marginVertical: 20,
+  },
+  eletroItem: {
     backgroundColor: "#FFF",
     padding: 15,
     borderRadius: 10,
@@ -138,7 +200,7 @@ const styles = StyleSheet.create({
   },
   noAlert: {
     fontSize: 18,
-    color: "#28a745",
+    color: "#777",
     textAlign: "center",
     marginTop: 20,
   },

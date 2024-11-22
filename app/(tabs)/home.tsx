@@ -15,6 +15,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import * as Progress from "react-native-progress"; // Importação do Progress
 
 type RootStackParamList = {
   signup: undefined;
@@ -96,9 +97,10 @@ export default function HomeScreen() {
     if (
       newEletro.nome.trim() === "" ||
       newEletro.horarioInicial === "" ||
-      newEletro.horarioFinal === ""
+      newEletro.horarioFinal === "" ||
+      newEletro.potencia <= 0
     ) {
-      Alert.alert("Erro", "Preencha todos os campos!");
+      Alert.alert("Erro", "Preencha todos os campos corretamente!");
       return;
     }
 
@@ -239,6 +241,9 @@ export default function HomeScreen() {
                 <Text style={styles.eletroInfo}>
                   De: {eletro.horarioInicial} Até: {eletro.horarioFinal}
                 </Text>
+                <Text style={styles.eletroInfo}>
+                  Potência: {eletro.potencia} kWh
+                </Text>
                 <View style={styles.actionButtons}>
                   <TouchableOpacity
                     onPress={() => handleEditEletrodomestico(eletro.id || "")}
@@ -316,6 +321,15 @@ export default function HomeScreen() {
                 setNewEletro({ ...newEletro, horarioFinal: text })
               }
             />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Potência em kWh"
+              keyboardType="numeric"
+              value={newEletro.potencia ? String(newEletro.potencia) : ""}
+              onChangeText={(text) =>
+                setNewEletro({ ...newEletro, potencia: parseFloat(text) || 0 })
+              }
+            />
             <TouchableOpacity
               style={styles.addButton}
               onPress={handleAddOrEditEletrodomestico}
@@ -350,7 +364,7 @@ export default function HomeScreen() {
           <Ionicons
             name="notifications-outline"
             size={24}
-            color={getIconColor("alert")} // Aplica a cor da função para "Alertas"
+            color={getIconColor("alert")}
           />
           <Text style={[styles.navText, { color: getIconColor("alert") }]}>
             Alertas
