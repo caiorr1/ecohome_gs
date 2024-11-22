@@ -1,10 +1,8 @@
-// api/AuthService.ts
 import axios from 'axios';
 import { SignupData, LoginData } from './types/AuthTypes';
 
-const BASE_URL = 'http://seu-servidor-api.com';
+const BASE_URL = 'http://localhost:8082';
 
-// Função para cadastro de usuário
 export const signup = async (signupData: SignupData) => {
   try {
     const response = await axios.post(`${BASE_URL}/req/signup`, signupData);
@@ -15,7 +13,6 @@ export const signup = async (signupData: SignupData) => {
   }
 };
 
-// Função para login de usuário
 export const login = async (loginData: LoginData) => {
   try {
     const response = await axios.post(`${BASE_URL}/req/login`, loginData);

@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://seu-servidor-api.com';
+const BASE_URL = 'http://localhost:8082';
 
-// Função para obter dados do consumo
 export const getConsumos = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/dashboard/consumos`);
@@ -13,4 +12,22 @@ export const getConsumos = async () => {
   }
 };
 
-// Outras funções para /dashboard/comodos, /dashboard/eletrodomésticos, etc.
+export const getComodos = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/dashboard/comodos`);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao obter cômodos:', error);
+    throw error;
+  }
+};
+
+export const getEletrodomesticos = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/dashboard/eletrodomesticos`);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao obter eletrodomésticos:', error);
+    throw error;
+  }
+};

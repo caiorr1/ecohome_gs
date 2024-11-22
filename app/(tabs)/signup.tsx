@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { useFonts } from 'expo-font';
 import InputField from '../../components/InputField';
-import { signup } from '../../api/AuthService';
-import { SignupData } from '../../api/types/AuthTypes';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
@@ -20,7 +19,6 @@ export default function SignupScreen() {
     'Poppins-Regular': require('../../assets/fonts/Poppins-Regular.ttf'),
   });
 
-  // Use NativeStackNavigationProp for better type inference
   const navigation = useNavigation<NavigationProp>();
 
   const [email, setEmail] = useState('');
@@ -37,15 +35,15 @@ export default function SignupScreen() {
       return;
     }
 
-    const signupData: SignupData = {
+    const signupData = {
       email,
       password,
     };
 
     try {
-      const response = await signup(signupData);
+      // Salva os dados do usuário no AsyncStorage
+      await AsyncStorage.setItem(`user_${signupData.email}`, JSON.stringify(signupData));
       Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-      // Navigate to the login screen
       navigation.navigate('login');
     } catch (error) {
       Alert.alert('Erro', 'Erro ao realizar cadastro. Tente novamente.');

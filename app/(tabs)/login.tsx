@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { useFonts } from 'expo-font';
 import InputField from '../../components/InputField';
-import { login } from '../../api/AuthService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 type RootStackParamList = {
   signup: undefined;
   login: undefined;
+  home: undefined; 
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'login'>;
@@ -29,14 +30,23 @@ export default function LoginScreen() {
   }
 
   const handleLogin = async () => {
-    const loginData = {
-      email,
-      password,
-    };
-
     try {
-      const response = await login(loginData);
+      const storedUser = await AsyncStorage.getItem(`user_${email}`);
+
+      if (!storedUser) {
+        Alert.alert('Erro', 'Usuário não encontrado.');
+        return;
+      }
+
+      const userData = JSON.parse(storedUser);
+
+      if (userData.password !== password) {
+        Alert.alert('Erro', 'Senha incorreta.');
+        return;
+      }
+
       Alert.alert('Sucesso', 'Login realizado com sucesso!');
+      navigation.navigate('home');
     } catch (error) {
       Alert.alert('Erro', 'Erro ao realizar login. Tente novamente.');
       console.error('Erro ao fazer login:', error);
@@ -48,7 +58,7 @@ export default function LoginScreen() {
       <View style={styles.imageContainer}>
         <Image source={require('../../assets/images/group_things.png')} style={styles.image} />
       </View>
-      
+
       <Text style={styles.title}>Preencha com seus dados :)</Text>
 
       <InputField
